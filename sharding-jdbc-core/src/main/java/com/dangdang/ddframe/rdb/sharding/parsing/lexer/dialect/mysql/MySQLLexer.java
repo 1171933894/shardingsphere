@@ -21,12 +21,14 @@ import com.dangdang.ddframe.rdb.sharding.parsing.lexer.analyzer.Dictionary;
 import com.dangdang.ddframe.rdb.sharding.parsing.lexer.Lexer;
 
 /**
- * MySQL词法解析器.
+ * MySQL词法解析器. 子 Lexer 通过重写方法实现自己独有的 SQL 语法
  *
  * @author zhangliang
  */
 public final class MySQLLexer extends Lexer {
-    
+    /**
+     * 字典
+     */
     private static Dictionary dictionary = new Dictionary(MySQLKeyword.values());
     
     public MySQLLexer(final String input) {

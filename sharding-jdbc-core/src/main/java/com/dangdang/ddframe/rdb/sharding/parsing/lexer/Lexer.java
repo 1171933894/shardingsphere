@@ -14,7 +14,41 @@
  * limitations under the License.
  * </p>
  */
-
+/**
+ * SQL ：SELECT i.* FROM t_order o JOIN t_order_item i ON o.order_id=i.order_id WHERE o.user_id=? AND o.order_id=?
+ * literals	TokenType类	TokenType值	endPosition
+ * SELECT	DefaultKeyword	SELECT	6
+ * i	Literals	IDENTIFIER	8
+ * .	Symbol	DOT	9
+ * *	Symbol	STAR	10
+ * FROM	DefaultKeyword	FROM	15
+ * t_order	Literals	IDENTIFIER	23
+ * o	Literals	IDENTIFIER	25
+ * JOIN	DefaultKeyword	JOIN	30
+ * t_order_item	Literals	IDENTIFIER	43
+ * i	Literals	IDENTIFIER	45
+ * ON	DefaultKeyword	ON	48
+ * o	Literals	IDENTIFIER	50
+ * .	Symbol	DOT	51
+ * order_id	Literals	IDENTIFIER	59
+ * =	Symbol	EQ	60
+ * i	Literals	IDENTIFIER	61
+ * .	Symbol	DOT	62
+ * order_id	Literals	IDENTIFIER	70
+ * WHERE	DefaultKeyword	WHERE	76
+ * o	Literals	IDENTIFIER	78
+ * .	Symbol	DOT	79
+ * user_id	Literals	IDENTIFIER	86
+ * =	Symbol	EQ	87
+ * ?	Symbol	QUESTION	88
+ * AND	DefaultKeyword	AND	92
+ * o	Literals	IDENTIFIER	94
+ * .	Symbol	DOT	95
+ * order_id	Literals	IDENTIFIER	103
+ * =	Symbol	EQ	104
+ * ?	Symbol	QUESTION	105
+ * Assist	END	105
+ */
 package com.dangdang.ddframe.rdb.sharding.parsing.lexer;
 
 import com.dangdang.ddframe.rdb.sharding.parsing.lexer.analyzer.CharType;
@@ -32,50 +66,70 @@ import lombok.RequiredArgsConstructor;
  */
 @RequiredArgsConstructor
 public class Lexer {
-    
+    /**
+     * 输出字符串
+     * 比如：SQL
+     */
     @Getter
     private final String input;
-    
+    /**
+     * 词法标记字典
+     */
     private final Dictionary dictionary;
-    
+    /**
+     * 解析到 SQL 的 offset
+     */
     private int offset;
-    
+    /**
+     * 当前 词法标记
+     */
     @Getter
     private Token currentToken;
-    
+
     /**
      * 分析下一个词法标记.
+     *
+     * @see #currentToken
+     * @see #offset
      */
     public final void nextToken() {
         skipIgnoredToken();
-        if (isVariableBegin()) {
+        if (isVariableBegin()) {// 变量
             currentToken = new Tokenizer(input, dictionary, offset).scanVariable();
-        } else if (isNCharBegin()) {
+        } else if (isNCharBegin()) {// N\
             currentToken = new Tokenizer(input, dictionary, ++offset).scanChars();
-        } else if (isIdentifierBegin()) {
+        } else if (isIdentifierBegin()) {// Keyword + Literals.IDENTIFIER
             currentToken = new Tokenizer(input, dictionary, offset).scanIdentifier();
-        } else if (isHexDecimalBegin()) {
+        } else if (isHexDecimalBegin()) {// 十六进制
             currentToken = new Tokenizer(input, dictionary, offset).scanHexDecimal();
-        } else if (isNumberBegin()) {
+        } else if (isNumberBegin()) {// 数字（整数+浮点数）
             currentToken = new Tokenizer(input, dictionary, offset).scanNumber();
-        } else if (isSymbolBegin()) {
+        } else if (isSymbolBegin()) {// 符号
             currentToken = new Tokenizer(input, dictionary, offset).scanSymbol();
-        } else if (isCharsBegin()) {
+        } else if (isCharsBegin()) {// 字符串，例如："abc"
             currentToken = new Tokenizer(input, dictionary, offset).scanChars();
-        } else if (isEnd()) {
+        } else if (isEnd()) {// 结束
             currentToken = new Token(Assist.END, "", offset);
-        } else {
+        } else {// 分析错误，无符合条件的词法标记
             currentToken = new Token(Assist.ERROR, "", offset);
         }
         offset = currentToken.getEndPosition();
     }
-    
+    /**
+     * 跳过忽略的词法标记
+     * 1. 空格
+     * 2. SQL Hint
+     * 3. SQL 注释
+     */
     private void skipIgnoredToken() {
+        // 空格
         offset = new Tokenizer(input, dictionary, offset).skipWhitespace();
+        // SQL Hint
         while (isHintBegin()) {
             offset = new Tokenizer(input, dictionary, offset).skipHint();
             offset = new Tokenizer(input, dictionary, offset).skipWhitespace();
         }
+        // SQL 注释
         while (isCommentBegin()) {
             offset = new Tokenizer(input, dictionary, offset).skipComment();
             offset = new Tokenizer(input, dictionary, offset).skipWhitespace();

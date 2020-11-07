@@ -53,17 +53,22 @@ public abstract class AbstractParser {
             result.append(Symbol.LEFT_PAREN.getLiterals());
             getLexer().nextToken();
             while (true) {
+                // 到达结尾 或者 匹配合适数的)右括号
                 if (Assist.END == getLexer().getCurrentToken().getType() || (Symbol.RIGHT_PAREN == getLexer().getCurrentToken().getType() && 0 == count)) {
                     break;
                 }
+                // 处理里面有多个括号的情况，例如：SELECT COUNT(DISTINCT(order_id) FROM t_order
                 if (Symbol.LEFT_PAREN == getLexer().getCurrentToken().getType()) {
                     count++;
                 } else if (Symbol.RIGHT_PAREN == getLexer().getCurrentToken().getType()) {
                     count--;
                 }
+                // 下一个词法
                 getLexer().nextToken();
             }
+            // 获得括号内的内容
             result.append(getLexer().getInput().substring(beginPosition, getLexer().getCurrentToken().getEndPosition()));
+            // 下一个词法
             getLexer().nextToken();
         }
         return result.toString();

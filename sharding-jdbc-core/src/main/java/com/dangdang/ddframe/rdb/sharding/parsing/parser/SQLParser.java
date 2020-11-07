@@ -45,7 +45,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
- * SQL解析器.
+ * SQL解析器. SQLParser，SQL 解析器。和词法解析器 Lexer 一样，不同数据库有不同的实现
  *
  * @author zhangliang
  */

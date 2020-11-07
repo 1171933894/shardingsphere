@@ -20,6 +20,11 @@ package com.dangdang.ddframe.rdb.sharding.parsing.lexer.token;
 /**
  * 词法标记类型.
  *
+ * DefaultKeyword ：词法关键词
+ * Literals ：词法字面量标记
+ * Symbol ：词法符号标记
+ * Assist ：词法辅助标记
+ *
  * @author zhangliang
  */
 public interface TokenType {

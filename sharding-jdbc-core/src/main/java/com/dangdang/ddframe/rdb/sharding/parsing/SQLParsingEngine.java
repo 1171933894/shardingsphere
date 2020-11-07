@@ -35,7 +35,7 @@ import com.dangdang.ddframe.rdb.sharding.parsing.parser.statement.update.UpdateP
 import lombok.RequiredArgsConstructor;
 
 /**
- * SQL解析引擎.
+ * SQL解析引擎.SQLParsingEngine，SQL 解析引擎。其 #parse() 方法作为 SQL 解析入口，本身不带复杂逻辑，通过调用 SQL 对应的 StatementParser 进行 SQL 解析。
  *
  * @author zhangliang
  */
@@ -54,11 +54,13 @@ public final class SQLParsingEngine {
      * @return SQL语句对象
      */
     public SQLStatement parse() {
+        // 获取 SQL解析器
         SQLParser sqlParser = getSQLParser();
-        sqlParser.skipIfEqual(Symbol.SEMI);
-        if (sqlParser.equalAny(DefaultKeyword.WITH)) {
+        sqlParser.skipIfEqual(Symbol.SEMI);// 跳过 ";"
+        if (sqlParser.equalAny(DefaultKeyword.WITH)) {// WITH Syntax
             skipWith(sqlParser);
         }
+        // 获取对应 SQL语句解析器 解析SQL
         if (sqlParser.equalAny(DefaultKeyword.SELECT)) {
             return SelectParserFactory.newInstance(sqlParser).parse();
         }
