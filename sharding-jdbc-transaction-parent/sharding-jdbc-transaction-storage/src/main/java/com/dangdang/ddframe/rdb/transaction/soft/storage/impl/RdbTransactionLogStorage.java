@@ -43,7 +43,12 @@ import java.util.List;
 public final class RdbTransactionLogStorage implements TransactionLogStorage {
     
     private final DataSource dataSource;
-    
+
+    /**
+     * 存储事务日志.
+     *
+     * @param transactionLog 事务日志
+     */
     @Override
     public void add(final TransactionLog transactionLog) {
         String sql = "INSERT INTO `transaction_log` (`id`, `transaction_type`, `data_source`, `sql`, `parameters`, `creation_time`) VALUES (?, ?, ?, ?, ?, ?);";
@@ -61,7 +66,12 @@ public final class RdbTransactionLogStorage implements TransactionLogStorage {
             throw new TransactionLogStorageException(ex);
         }
     }
-    
+
+    /**
+     * 根据主键删除事务日志.
+     *
+     * @param id 事务日志主键
+     */
     @Override
     public void remove(final String id) {
         String sql = "DELETE FROM `transaction_log` WHERE `id`=?;";
@@ -74,7 +84,18 @@ public final class RdbTransactionLogStorage implements TransactionLogStorage {
             throw new TransactionLogStorageException(ex);
         }
     }
-    
+
+    /**
+     * 读取需要处理的事务日志.
+     *
+     * <p>需要处理的事务日志为: </p>
+     * <p>1. 异步处理次数小于最大处理次数.</p>
+     * <p>2. 异步处理的事务日志早于异步处理的间隔时间.</p>
+     *
+     * @param size 获取日志的数量
+     * @param maxDeliveryTryTimes 事务送达的最大尝试次数
+     * @param maxDeliveryTryDelayMillis 执行送达事务的延迟毫秒数.
+     */
     @Override
     public List<TransactionLog> findEligibleTransactionLogs(final int size, final int maxDeliveryTryTimes, final long maxDeliveryTryDelayMillis) {
         List<TransactionLog> result = new ArrayList<>(size);
@@ -100,7 +121,12 @@ public final class RdbTransactionLogStorage implements TransactionLogStorage {
         }
         return result;
     }
-    
+
+    /**
+     * 增加事务日志异步重试次数.
+     *
+     * @param id 事务主键
+     */
     @Override
     public void increaseAsyncDeliveryTryTimes(final String id) {
         String sql = "UPDATE `transaction_log` SET `async_delivery_try_times`=`async_delivery_try_times`+1 WHERE `id`=?;";
@@ -113,9 +139,17 @@ public final class RdbTransactionLogStorage implements TransactionLogStorage {
             throw new TransactionLogStorageException(ex);
         }
     }
-    
+
+    /**
+     * 处理事务数据.
+     *
+     * @param connection 业务数据库连接
+     * @param transactionLog 事务日志
+     * @param maxDeliveryTryTimes 事务送达的最大尝试次数
+     */
     @Override
     public boolean processData(final Connection connection, final TransactionLog transactionLog, final int maxDeliveryTryTimes) {
+        // 重试执行失败 SQL
         try (
             Connection conn = connection;
             PreparedStatement preparedStatement = conn.prepareStatement(transactionLog.getSql())) {
@@ -124,9 +158,11 @@ public final class RdbTransactionLogStorage implements TransactionLogStorage {
             }
             preparedStatement.executeUpdate();
         } catch (final SQLException ex) {
+            // 重试失败，更新事务日志，增加已异步重试次数
             increaseAsyncDeliveryTryTimes(transactionLog.getId());
             throw new TransactionCompensationException(ex);
         }
+        // 移除重试执行成功 SQL 对应的事务日志
         remove(transactionLog.getId());
         return true;
     }

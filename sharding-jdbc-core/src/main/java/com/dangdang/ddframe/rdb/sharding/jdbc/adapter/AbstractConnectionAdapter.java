@@ -69,7 +69,15 @@ public abstract class AbstractConnectionAdapter extends AbstractUnsupportedOpera
             each.setAutoCommit(autoCommit);
         }
     }
-    
+
+    /**
+     * 引擎会遍历底层所有真正的数据库连接，一个个进行commit操作，如果任何一个出现了异常，
+     * 直接捕获异常，但是也只是捕获而已，然后接着下一个连接的commit，这也就很好的说明了，
+     * 如果在执行任何一条sql语句出现了异常，整个操作是可以原子性回滚的，因为此时所有连接
+     * 都不会执行commit，但如果已经到了commit这一步的话，如果有连接commit失败了，是不
+     * 会影响到其他连接的。
+     */
+    // sharding-jdbc默认是如何处理事务的？看看这个方法代码
     @Override
     public final void commit() throws SQLException {
         for (Connection each : getConnections()) {

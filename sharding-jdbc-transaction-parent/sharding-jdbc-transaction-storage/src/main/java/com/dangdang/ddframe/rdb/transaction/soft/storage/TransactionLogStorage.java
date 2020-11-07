@@ -22,6 +22,16 @@ import java.util.List;
 
 /**
  * 事务日志存储器接口.
+ *
+ * 柔性事务执行过程中，会通过事务日志( TransactionLog ) 记录每条 SQL 执行状态：
+ *
+ *      SQL 执行前，记录一条事务日志
+ *      SQL 执行成功，移除对应的事务日志
+ *
+ * 通过实现事务日志存储器接口( TransactionLogStorage )，提供存储功能。目前有两种实现：
+ *
+ *      MemoryTransactionLogStorage ：基于内存的事务日志存储器。主要用于开发测试，生产环境下不要使用。
+ *      RdbTransactionLogStorage ：基于数据库的事务日志存储器。
  * 
  * @author zhangliang
  */

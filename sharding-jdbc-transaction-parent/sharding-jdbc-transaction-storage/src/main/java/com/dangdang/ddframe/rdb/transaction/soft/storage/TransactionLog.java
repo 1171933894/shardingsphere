@@ -33,20 +33,38 @@ import java.util.List;
 @Getter
 public final class TransactionLog {
     
-    private final String id;
+    private final String id;// 	EventBus 事件编号，非事务编号
     
     private final String transactionId;
-    
-    private final SoftTransactionType transactionType;
-    
-    private final String dataSource;
-    
-    private final String sql;
-    
-    private final List<Object> parameters;
 
+    /**
+     * 	柔性事务类型
+     */
+    private final SoftTransactionType transactionType;
+
+    /**
+     * 	真实数据源名
+     */
+    private final String dataSource;
+
+    /**
+     * 	执行 SQL
+     */
+    private final String sql;// 已经改写过的 SQL
+
+    /**
+     * 	占位符参数
+     */
+    private final List<Object> parameters;// JSON 字符串存储
+
+    /**
+     * 	记录时间
+     */
     private final long creationTime;
-    
+
+    /**
+     * 	已异步重试次数
+     */
     @Setter
     private int asyncDeliveryTryTimes;
 }

@@ -37,7 +37,13 @@ import java.sql.SQLException;
 
 /**
  * 柔性事务管理器.
- * 
+ *
+ * 在官方文档中，针对弱事务有如下三点说明：
+ *
+ *      1）完全支持非跨库事务，例如：仅分表，或分库但是路由的结果在单库中。
+ *      2）完全支持因逻辑异常导致的跨库事务。例如：同一事务中，跨两个库更新。更新完毕后，抛出空指针，则两个库的内容都能回滚。
+ *      3）不支持因网络、硬件异常导致的跨库事务。例如：同一事务中，跨两个库更新，更新完毕后、未提交之前，第一个库死机，则只有第二个库数据提交。
+ *
  * @author zhangliang
  * @author caohao
  */
@@ -55,11 +61,14 @@ public final class SoftTransactionManager {
      * 初始化事务管理器.
      */
     public void init() throws SQLException {
+        // 初始化 最大努力送达型事务监听器
         EventBusInstance.getInstance().register(new BestEffortsDeliveryListener());
+        // 初始化 事务日志数据库存储表
         if (TransactionLogDataSourceType.RDB == transactionConfig.getStorageType()) {
             Preconditions.checkNotNull(transactionConfig.getTransactionLogDataSource());
             createTable();
         }
+        // 初始化 内嵌的最大努力送达型异步作业
         if (transactionConfig.getBestEffortsDeliveryJobConfiguration().isPresent()) {
             new NestedBestEffortsDeliveryJobFactory(transactionConfig).init();
         }
