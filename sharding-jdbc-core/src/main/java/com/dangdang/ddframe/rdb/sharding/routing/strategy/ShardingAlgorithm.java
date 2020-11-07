@@ -19,6 +19,9 @@ package com.dangdang.ddframe.rdb.sharding.routing.strategy;
 
 /**
  * 分片算法的标识接口.
+ *
+ * 针对分库、分表有两个子接口。
+ * 针对分片键数量分成：无分片键算法、单片键算法、多片键算法。
  * 
  * @author zhangliang
  */

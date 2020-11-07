@@ -77,11 +77,13 @@ public final class SQLRewriteEngine {
             return result;
         }
         int count = 0;
+        // 排序SQLToken，按照 beginPosition 递增
         sortByBeginPosition();
         for (SQLToken each : sqlTokens) {
-            if (0 == count) {
+            if (0 == count) {// 拼接第一个 SQLToken 前的字符串
                 result.appendLiterals(originalSQL.substring(0, each.getBeginPosition()));
             }
+            // 拼接每个SQLToken
             if (each instanceof TableToken) {
                 appendTableToken(result, (TableToken) each, count, sqlTokens);
             } else if (each instanceof ItemsToken) {
@@ -105,10 +107,20 @@ public final class SQLRewriteEngine {
             }
         });
     }
-    
+
+    /**
+     * 拼接 TableToken
+     *
+     * @param sqlBuilder SQL构建器
+     * @param tableToken tableToken
+     * @param count tableToken 在 sqlTokens 的顺序
+     * @param sqlTokens sqlTokens
+     */
     private void appendTableToken(final SQLBuilder sqlBuilder, final TableToken tableToken, final int count, final List<SQLToken> sqlTokens) {
+        // 拼接 TableToken
         String tableName = tableNames.contains(tableToken.getTableName()) ? tableToken.getTableName() : tableToken.getOriginalLiterals();
         sqlBuilder.appendTable(tableName);
+        // 拼接 SQLToken 后面的字符串
         int beginPosition = tableToken.getBeginPosition() + tableToken.getOriginalLiterals().length();
         int endPosition = sqlTokens.size() - 1 == count ? originalSQL.length() : sqlTokens.get(count + 1).getBeginPosition();
         sqlBuilder.appendLiterals(originalSQL.substring(beginPosition, endPosition));

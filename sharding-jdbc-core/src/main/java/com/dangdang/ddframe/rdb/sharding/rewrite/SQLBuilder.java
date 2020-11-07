@@ -32,9 +32,13 @@ import java.util.Map;
  */
 @RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public final class SQLBuilder {
-    
+    /**
+     * 段集合
+     */
     private final List<Object> segments;
-    
+    /**
+     * 当前段
+     */
     private StringBuilder currentSegment;
     
     public SQLBuilder() {
@@ -58,7 +62,9 @@ public final class SQLBuilder {
      * @param tableName 表名称
      */
     public void appendTable(final String tableName) {
+        // 添加 TableToken
         segments.add(new TableToken(tableName));
+        // 新建当前段
         currentSegment = new StringBuilder();
         segments.add(currentSegment);
     }
@@ -97,7 +103,9 @@ public final class SQLBuilder {
     
     @RequiredArgsConstructor
     private class TableToken {
-        
+        /**
+         * 表名
+         */
         private final String tableName;
         
         @Override

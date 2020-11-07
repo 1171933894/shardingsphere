@@ -28,7 +28,7 @@ import java.util.TreeSet;
 
 /**
  * 分片策略.
- * 
+ *
  * @author zhangliang
  */
 public class ShardingStrategy {

@@ -82,13 +82,13 @@ public final class TableRule {
         this.dynamic = dynamic;
         this.databaseShardingStrategy = databaseShardingStrategy;
         this.tableShardingStrategy = tableShardingStrategy;
-        if (dynamic) {
+        if (dynamic) {// 动态表的分库分表数据单元
             Preconditions.checkNotNull(dataSourceRule);
             this.actualTables = generateDataNodes(dataSourceRule);
-        } else if (null == actualTables || actualTables.isEmpty()) {
+        } else if (null == actualTables || actualTables.isEmpty()) {// 静态表的分库分表数据单元
             Preconditions.checkNotNull(dataSourceRule);
             this.actualTables = generateDataNodes(Collections.singletonList(logicTable), dataSourceRule, dataSourceNames);
-        } else {
+        } else {// 静态表的分库分表数据单元
             this.actualTables = generateDataNodes(actualTables, dataSourceRule, dataSourceNames);
         }
         this.generateKeyColumn = generateKeyColumn;
@@ -104,7 +104,7 @@ public final class TableRule {
     public static TableRuleBuilder builder(final String logicTable) {
         return new TableRuleBuilder(logicTable);
     }
-    
+
     private List<DataNode> generateDataNodes(final DataSourceRule dataSourceRule) {
         Collection<String> dataSourceNames = dataSourceRule.getDataSourceNames();
         List<DataNode> result = new ArrayList<>(dataSourceNames.size());
@@ -113,7 +113,15 @@ public final class TableRule {
         }
         return result;
     }
-    
+
+    /**
+     * 生成静态数据分片节点
+     *
+     * @param actualTables 真实表
+     * @param dataSourceRule 数据源配置对象
+     * @param actualDataSourceNames 数据源名集合
+     * @return 静态数据分片节点
+     */
     private List<DataNode> generateDataNodes(final List<String> actualTables, final DataSourceRule dataSourceRule, final Collection<String> actualDataSourceNames) {
         Collection<String> dataSourceNames = getDataSourceNames(dataSourceRule, actualDataSourceNames);
         List<DataNode> result = new ArrayList<>(actualTables.size() * (dataSourceNames.isEmpty() ? 1 : dataSourceNames.size()));
@@ -128,7 +136,14 @@ public final class TableRule {
         }
         return result;
     }
-    
+
+    /**
+     * 根据 数据源配置对象 和 数据源名集合 获得 最终的数据源名集合
+     *
+     * @param dataSourceRule 数据源配置对象
+     * @param actualDataSourceNames 数据源名集合
+     * @return 最终的数据源名集合
+     */
     private Collection<String> getDataSourceNames(final DataSourceRule dataSourceRule, final Collection<String> actualDataSourceNames) {
         if (null == dataSourceRule) {
             return Collections.emptyList();
@@ -215,7 +230,10 @@ public final class TableRule {
      */
     @RequiredArgsConstructor
     public static class TableRuleBuilder {
-        
+        /**
+         * 数据分片的逻辑表，对于水平拆分的数据库(表)，同一类表的总称。
+         * 例：订单数据根据主键尾数拆分为10张表,分别是t_order_0到t_order_9，他们的逻辑表名为t_order。
+         */
         private final String logicTable;
         
         private boolean dynamic;

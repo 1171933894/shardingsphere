@@ -36,9 +36,9 @@ import java.util.Set;
 @Getter
 public final class SQLRouteResult {
     
-    private final SQLStatement sqlStatement;
+    private final SQLStatement sqlStatement;// SQL语句对象，经过SQL解析的结果对象
     
-    private final Set<SQLExecutionUnit> executionUnits = new HashSet<>();
+    private final Set<SQLExecutionUnit> executionUnits = new HashSet<>();// SQL最小执行单元集合。SQL执行时，执行每个单元
     
-    private final List<Number> generatedKeys = new LinkedList<>();
+    private final List<Number> generatedKeys = new LinkedList<>();// 插入SQL语句生成的主键编号集合。目前不支持批量插入而使用集合的原因，猜测是为了未来支持批量插入做准备
 }
