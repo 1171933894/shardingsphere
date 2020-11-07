@@ -33,7 +33,9 @@ import java.util.LinkedList;
  * @author zhangliang
  */
 public abstract class AbstractConnectionAdapter extends AbstractUnsupportedOperationConnection {
-    
+    /**
+     * 是否自动提交
+     */
     private boolean autoCommit = true;
     
     private boolean readOnly = true;
@@ -41,18 +43,25 @@ public abstract class AbstractConnectionAdapter extends AbstractUnsupportedOpera
     private boolean closed;
     
     private int transactionIsolation = TRANSACTION_READ_UNCOMMITTED;
-    
+    /**
+     * 获得链接 和分库分表相关，因而仅抽象该方法，留给子类实现
+     *
+     * @return 链接
+     */
     protected abstract Collection<Connection> getConnections();
     
     @Override
     public final boolean getAutoCommit() throws SQLException {
         return autoCommit;
     }
-    
+
+    /**
+     * 调用时，实际会设置其所持有的 Connection 的 autoCommit 属性
+     */
     @Override
     public final void setAutoCommit(final boolean autoCommit) throws SQLException {
         this.autoCommit = autoCommit;
-        if (getConnections().isEmpty()) {
+        if (getConnections().isEmpty()) {// 无数据连接时，记录方法调用
             recordMethodInvocation(Connection.class, "setAutoCommit", new Class[] {boolean.class}, new Object[] {autoCommit});
             return;
         }

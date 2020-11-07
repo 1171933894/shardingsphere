@@ -36,6 +36,9 @@ public final class RoundRobinSlaveLoadBalanceStrategy implements SlaveLoadBalanc
         AtomicInteger count = COUNT_MAP.containsKey(name) ? COUNT_MAP.get(name) : new AtomicInteger(0);
         COUNT_MAP.putIfAbsent(name, count);
         count.compareAndSet(slaveDataSources.size(), 0);
+        /**
+         * RoundRobinSlaveLoadBalanceStrategy，轮询负载均衡策略，每个从节点访问次数均衡，暂不支持数据源故障移除
+         */
         return slaveDataSources.get(count.getAndIncrement() % slaveDataSources.size());
     }
 }
