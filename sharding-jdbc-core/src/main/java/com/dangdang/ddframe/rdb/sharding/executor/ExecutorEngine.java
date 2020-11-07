@@ -52,7 +52,16 @@ import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 
 /**
- * SQL执行引擎.
+ * ExecutorEngine，SQL执行引擎。
+ *
+ * 分表分库，需要执行的 SQL 数量从单条变成了多条，此时有两种方式执行：
+ *
+ * 串行执行 SQL
+ * 并行执行 SQL
+ * 前者，编码容易，性能较差，总耗时是多条 SQL 执行时间累加。
+ * 后者，编码复杂，性能较好，总耗时约等于执行时间最长的 SQL。
+ *
+ * 👼 ExecutorEngine 当然采用的是后者，并行执行 SQL。
  * 
  * @author gaohongtao
  * @author zhangliang
@@ -117,11 +126,20 @@ public final class ExecutorEngine implements AutoCloseable {
         }
         Iterator<? extends BaseStatementUnit> iterator = baseStatementUnits.iterator();
         BaseStatementUnit firstInput = iterator.next();
+        // 第二个任务开始所有 SQL任务 提交线程池【异步】执行任务
+        /**
+         * ListenableFuture#get() 当所有任务都成功时，返回所有任务执行结果；当任何一个任务失败时，马上抛出异常，无需等待其他任务执行完成
+         */
         ListenableFuture<List<T>> restFutures = asyncExecute(sqlType, Lists.newArrayList(iterator), parameterSets, executeCallback);
         T firstOutput;
         List<T> restOutputs;
+        /**
+         * 为什么会分同步执行和异步执行呢？猜测，当SQL 执行是单表时，只要进行第一个任务的同步调用，性能更加优秀
+         */
         try {
+            // 第一个任务【同步】执行任务
             firstOutput = syncExecute(sqlType, firstInput, parameterSets, executeCallback);
+            // 等待第二个任务开始所有 SQL任务完成
             restOutputs = restFutures.get();
             //CHECKSTYLE:OFF
         } catch (final Exception ex) {
@@ -129,6 +147,7 @@ public final class ExecutorEngine implements AutoCloseable {
             ExecutorExceptionHandler.handleException(ex);
             return null;
         }
+        // 返回结果
         List<T> result = Lists.newLinkedList(restOutputs);
         result.add(0, firstOutput);
         return result;
@@ -140,6 +159,7 @@ public final class ExecutorEngine implements AutoCloseable {
         final boolean isExceptionThrown = ExecutorExceptionHandler.isExceptionThrown();
         final Map<String, Object> dataMap = ExecutorDataMap.getDataMap();
         for (final BaseStatementUnit each : baseStatementUnits) {
+            // 提交线程池【异步】执行任务
             result.add(executorService.submit(new Callable<T>() {
                 
                 @Override
@@ -148,10 +168,12 @@ public final class ExecutorEngine implements AutoCloseable {
                 }
             }));
         }
+        // 返回 ListenableFuture
         return Futures.allAsList(result);
     }
     
     private <T> T syncExecute(final SQLType sqlType, final BaseStatementUnit baseStatementUnit, final List<List<Object>> parameterSets, final ExecuteCallback<T> executeCallback) throws Exception {
+        // 【同步】执行任务
         return executeInternal(sqlType, baseStatementUnit, parameterSets, executeCallback, ExecutorExceptionHandler.isExceptionThrown(), ExecutorDataMap.getDataMap());
     }
     
@@ -162,9 +184,11 @@ public final class ExecutorEngine implements AutoCloseable {
             ExecutorExceptionHandler.setExceptionThrown(isExceptionThrown);
             ExecutorDataMap.setDataMap(dataMap);
             List<AbstractExecutionEvent> events = new LinkedList<>();
+            // 生成 Event
             if (parameterSets.isEmpty()) {
                 events.add(getExecutionEvent(sqlType, baseStatementUnit, Collections.emptyList()));
             }
+            // EventBus 发布 EventExecutionType.BEFORE_EXECUTE
             for (List<Object> each : parameterSets) {
                 events.add(getExecutionEvent(sqlType, baseStatementUnit, each));
             }
@@ -172,8 +196,10 @@ public final class ExecutorEngine implements AutoCloseable {
                 EventBusInstance.getInstance().post(event);
             }
             try {
+                // 执行回调函数
                 result = executeCallback.execute(baseStatementUnit);
             } catch (final SQLException ex) {
+                // EventBus 发布 EventExecutionType.EXECUTE_FAILURE
                 for (AbstractExecutionEvent each : events) {
                     each.setEventExecutionType(EventExecutionType.EXECUTE_FAILURE);
                     each.setException(Optional.of(ex));
@@ -182,6 +208,7 @@ public final class ExecutorEngine implements AutoCloseable {
                 }
                 return null;
             }
+            // EventBus 发布 EventExecutionType.EXECUTE_SUCCESS
             for (AbstractExecutionEvent each : events) {
                 each.setEventExecutionType(EventExecutionType.EXECUTE_SUCCESS);
                 EventBusInstance.getInstance().post(each);

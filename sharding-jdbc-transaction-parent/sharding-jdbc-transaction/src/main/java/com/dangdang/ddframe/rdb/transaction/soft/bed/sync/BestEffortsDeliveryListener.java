@@ -44,8 +44,8 @@ import static com.dangdang.ddframe.rdb.transaction.soft.constants.SoftTransactio
 @Slf4j
 public final class BestEffortsDeliveryListener {
     
-    @Subscribe
-    @AllowConcurrentEvents
+    @Subscribe// 订阅
+    @AllowConcurrentEvents// 是否允许并发执行，即线程安全
     public void listen(final DMLExecutionEvent event) {
         if (!isProcessContinuously()) {
             return;

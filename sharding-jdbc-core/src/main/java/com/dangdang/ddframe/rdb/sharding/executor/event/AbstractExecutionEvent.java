@@ -28,22 +28,45 @@ import java.util.UUID;
 /**
  * SQL执行时事件.
  *
+ * AbstractExecutionEvent 有两个实现子类：
+ *
+ *      DMLExecutionEvent：DML类SQL执行时事件
+ *      DQLExecutionEvent：DQL类SQL执行时事件
+ *
+ * EventExecutionType，事件触发类型：
+ *
+ *      BEFORE_EXECUTE：执行前
+ *      EXECUTE_SUCCESS：执行成功
+ *      EXECUTE_FAILURE：执行失败
+ *
  * @author zhangliang
  */
 @Getter
 @Setter
 public abstract class AbstractExecutionEvent {
-    
+    /**
+     * 事件编号
+     */
     private final String id;
-    
+    /**
+     * 数据源
+     */
     private final String dataSource;
-    
+    /**
+     * SQL
+     */
     private final String sql;
-    
+    /**
+     * 参数
+     */
     private final List<Object> parameters;
-    
+    /**
+     * 事件类型
+     */
     private EventExecutionType eventExecutionType;
-    
+    /**
+     * 异常
+     */
     private Optional<SQLException> exception;
     
     public AbstractExecutionEvent(final String dataSource, final String sql, final List<Object> parameters) {
