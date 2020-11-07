@@ -51,28 +51,45 @@ import java.util.Date;
 @Getter
 @Slf4j
 public final class DefaultKeyGenerator implements KeyGenerator {
-    
+
+    /**
+     * 时间偏移量，从2016年11月1日零点开始
+     */
     public static final long EPOCH;
     
     public static final String WORKER_ID_PROPERTY_KEY = "sharding-jdbc.default.key.generator.worker.id";
     
     public static final String WORKER_ID_ENV_KEY = "SHARDING_JDBC_DEFAULT_KEY_GENERATOR_WORKER_ID";
-    
+    /**
+     * 自增量占用比特
+     */
     private static final long SEQUENCE_BITS = 12L;
-    
+    /**
+     * 工作进程ID比特
+     */
     private static final long WORKER_ID_BITS = 10L;
-    
+    /**
+     * 自增量掩码（最大值）
+     */
     private static final long SEQUENCE_MASK = (1 << SEQUENCE_BITS) - 1;
-    
+    /**
+     * 工作进程ID左移比特数（位数）
+     */
     private static final long WORKER_ID_LEFT_SHIFT_BITS = SEQUENCE_BITS;
-    
+    /**
+     * 时间戳左移比特数（位数）
+     */
     private static final long TIMESTAMP_LEFT_SHIFT_BITS = WORKER_ID_LEFT_SHIFT_BITS + WORKER_ID_BITS;
-    
+    /**
+     * 工作进程ID最大值
+     */
     private static final long WORKER_ID_MAX_VALUE = 1L << WORKER_ID_BITS;
     
     @Setter
     private static TimeService timeService = new TimeService();
-    
+    /**
+     * 工作进程ID
+     */
     @Getter
     private static long workerId;
     
@@ -86,9 +103,13 @@ public final class DefaultKeyGenerator implements KeyGenerator {
         EPOCH = calendar.getTimeInMillis();
         initWorkerId();
     }
-    
+    /**
+     * 最后自增量
+     */
     private long sequence;
-    
+    /**
+     * 最后生成编号时间戳，单位：毫秒
+     */
     private long lastTime;
     
     public static void initWorkerId() {
