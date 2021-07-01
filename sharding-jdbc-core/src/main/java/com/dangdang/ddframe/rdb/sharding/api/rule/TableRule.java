@@ -40,19 +40,34 @@ import java.util.List;
 @Getter
 @ToString
 public final class TableRule {
-    
+
+    /**
+     * 建立逻辑表是t_order，实际表是t_order_0，t_order_1的TableRule
+     */
     private final String logicTable;
     
     private final boolean dynamic;
     
     private final List<DataNode> actualTables;
-    
+
+    /**
+     * 数据库分片策略
+     */
     private final DatabaseShardingStrategy databaseShardingStrategy;
-    
+
+    /**
+     * 表分片策略
+     */
     private final TableShardingStrategy tableShardingStrategy;
-    
+
+    /**
+     * 自增列名称
+     */
     private final String generateKeyColumn;
-    
+
+    /**
+     * 列主键生成器
+     */
     private final KeyGenerator keyGenerator;
     
     /**

@@ -44,6 +44,7 @@ public final class Main {
     // CHECKSTYLE:OFF
     public static void main(final String[] args) throws SQLException {
     // CHECKSTYLE:ON
+        // step1: 配置sharding数据源
         DataSource dataSource = getShardingDataSource();
         printSimpleSelect(dataSource);
         System.out.println("--------------");
@@ -101,10 +102,15 @@ public final class Main {
     }
     
     private static ShardingDataSource getShardingDataSource() {
+        // 构造DataSourceRule，即key与数据源的KV对；
         DataSourceRule dataSourceRule = new DataSourceRule(createDataSourceMap());
+        // 建立逻辑表是t_order，实际表是t_order_0，t_order_1的TableRule
         TableRule orderTableRule = TableRule.builder("t_order").actualTables(Arrays.asList("t_order_0", "t_order_1")).dataSourceRule(dataSourceRule).build();
+        // 建立逻辑表是t_order_item，实际表是t_order_item_0，t_order_item_1的TableRule
         TableRule orderItemTableRule = TableRule.builder("t_order_item").actualTables(Arrays.asList("t_order_item_0", "t_order_item_1")).dataSourceRule(dataSourceRule).build();
         ShardingRule shardingRule = ShardingRule.builder().dataSourceRule(dataSourceRule).tableRules(Arrays.asList(orderTableRule, orderItemTableRule))
+                // 增加绑定表--绑定表代表一组表，这组表的逻辑表与实际表之间的映射关系是相同的。比如t_order与t_order_item就是这样一组绑定表关系,
+                // 它们的分库与分表策略是完全相同的,那么可以使用它们的表规则将它们配置成绑定表，绑定表所有路由计算将会只使用主表的策略；
                 .bindingTableRules(Collections.singletonList(new BindingTableRule(Arrays.asList(orderTableRule, orderItemTableRule))))
                 .databaseShardingStrategy(new DatabaseShardingStrategy("user_id", new ModuloDatabaseShardingAlgorithm()))
                 .tableShardingStrategy(new TableShardingStrategy("order_id", new ModuloTableShardingAlgorithm())).build();
